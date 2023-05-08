@@ -85,6 +85,9 @@ def wrangle_log_data():
     df.cohort_id = df.cohort_id.fillna(999).astype('int')
     df.start_date = pd.to_datetime(df.start_date)
     df.end_date = pd.to_datetime(df.end_date)
+    # there is one null value in path,
+    # replacing that with 'no_path_recorded'
+    df.fillna('no_path_recorded', inplace=True)
     
     return df
 
