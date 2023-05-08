@@ -93,3 +93,61 @@ def get_active_user_logs(df):
     df = df[(df.start_date < df.index) & (df.end_date > df.index)]
     
     return df
+
+
+# make a column for 'hardly accesses curriculum'.
+# column can be based on a variable percentage of the mean for their
+# program.
+def low_usage_users(df, n):
+    '''
+    This function takes in a curriculum logs dataframe and returns
+    a dataframe of users who use the curriculum at a rate of n times
+    the mean for all users in the dataset or less.
+    
+    Arguments: df: a curriculum logs dataframe
+                n: an integer or float value representing the desired 
+                number of times the mean usage to define as low_usage
+    Returns: original df with added columns 'total_visits' which represents
+            how many log entries the individual user made, and 'hardly_used'
+            which represents whether a user was at or below the threshold
+            value of vists as establish by n * mean_usage.
+    '''
+    # establish mean_usage for all users in df
+    mean_usage = df.groupby('user_id').count().path.mean()
+    # create a df of for users visit data
+    users_df = []
+    # create df for each user and append to users_df
+    for user in df.user_id.unique():
+        user_df = df[df.user_id == user]
+        total_visits = user_df.shape[0]
+        hardly_used = total_visits <= (mean_usage * n)
+        user_df = user_df.assign(total_visits=total_visits, hardly_used=hardly_used)
+        users_df.append(user_df)
+    # concatenate all of the user_df in users_df
+    df = pd.concat(users_df)
+    # return a df of users meeting the 'hardly_used' description
+    return df[df.hardly_used == True]
+
+
+# creates df of users who logged only n% or less paths compared to paths
+# logged by the average user.
+def low_users_by_cohort(df, n=0.1):
+    '''
+    Function takes in a dataframe of curriculum logs and returns
+    a dataframe of low curriculum users by cohort. Relies on the
+    low_usage_users function.
+    
+    Arguments: df: a curriculum logs dataframe
+                n: an integer or float value representing the desired 
+                number of times the mean usage to define as low_usage
+    Returns: df of low curriculum users by cohort which represents 
+                whether a user was at or below the threshold
+                value of vists as establish by n * mean_usage.
+    '''
+    df = low_usage_users(df=df, n=n)
+    df = df.groupby(['name']).agg(
+        {'user_id':'nunique', 'cohort_size':'first'})[['user_id','cohort_size']]
+    df['proportion_low_users'] = df['user_id']/df['cohort_size']
+    df = df.sort_values(by='proportion_low_users', ascending=False)
+    
+    return df
