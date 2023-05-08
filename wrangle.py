@@ -88,6 +88,10 @@ def wrangle_log_data():
     # there is one null value in path,
     # replacing that with 'no_path_recorded'
     df.fillna('no_path_recorded', inplace=True)
+    # add feature 'cohort_size'
+    cohort_sizes = get_cohort_sizes(df)
+    # now assign the cohort sizes to a new column 'cohort_size'
+    df['cohort_size'] = [cohort_sizes[name] for name in df['name']]
     
     return df
 
@@ -106,30 +110,30 @@ col_list = ['bedrooms', 'bathrooms', 'area', 'tax_value', 'tax_amount', 'tax_val
 
 
 
-def remove_outliers(df, col_list=col_list, k=1.5):
+def get_cohort_rosters(df):
     '''
-    remove outliers from a dataframe based on a list of columns
-    using the tukey method.
-    
-    Arguments: a DataFrame, col_list=[list of column names or indexes]
-                , a k value that equals the number of InterQuartile Ranges
-                outside of Q1 and Q3 that will define outliers to be removed.
-                col_list defaults to the col_list variable in this module.
-                k defaults to the standard 1.5 * IQR for Tukey method.
-                
-    Returns: a single dataframe with outliers removed
+    This function takes in a dataframe of curriculum logs and returns a
+    dictionary of unique cohort names and array of user_ids as key:value
+    pairs'''
+    cohorts = df.name.unique().tolist()
+    cohort_rosters = {}
+    for cohort in cohorts:
+        cohort_rosters[cohort] = df[df.name == cohort].user_id.unique()
+    return cohort_rosters
+
+
+
+def get_cohort_sizes(df):
     '''
-    col_qs = {}
-    for col in col_list:
-        col_qs[col] = q1, q3 = df[col].quantile([0.25, 0.75])
-    for col in col_list:
-        iqr = col_qs[col][0.75] - col_qs[col][0.25]
-        lower_fence = col_qs[col][0.25] - (k*iqr)
-        upper_fence = col_qs[col][0.75] + (k*iqr)
-        df = df[(df[col] > lower_fence) & (df[col] < upper_fence)]
-    df.reset_index(drop=True, inplace=True)
-    
-    return df
+    This function takes in a dataframe of curriculum logs and 
+    returns each cohort name and size in users as a key:value 
+    pair. It relies on the get_cohort_rosters() function. 
+    '''
+    cohort_rosters = get_cohort_rosters(df)
+    cohort_size = {}
+    for cohort in cohort_rosters:
+        cohort_size[cohort] = len(cohort_rosters[cohort])
+    return cohort_size    
 
 
 

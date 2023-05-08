@@ -82,3 +82,14 @@ def top_lessons_after_active(df):
             columns=['proportion_ttl_views']).reset_index()
         
     return top_lessons
+
+
+# create a df of logs by active users:
+def get_active_user_logs(df):
+    '''
+    takes in a curriculum log dataframe and returns the df filtered to 
+    only log entries that took place while students were active
+    '''
+    df = df[(df.start_date < df.index) & (df.end_date > df.index)]
+    
+    return df
