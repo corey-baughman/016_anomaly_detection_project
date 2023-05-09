@@ -64,6 +64,24 @@ def top_lessons_by_program(df):
        
     return top_lessons
 
+
+# find bottom lessons for a program id
+def bottom_lessons_by_program(df):
+    '''
+    function takes in a dataframe and returns the least accessed lesson paths 
+    visited by program cohorts.
+    Arguments: A DataFrame from curriculum_logs db
+    Returns: DataFrame of bottom lessons for the input df.'''
+    # list of non-lesson paths
+    not_lessons = ['/', 'search/search_index.json', 'toc', 'index.html', 'appendix']
+    # make dataframes with only lesson paths:
+    lessons = df[~df.path.isin(not_lessons)]
+    bottom_lessons = pd.DataFrame(
+            lessons.value_counts('path', normalize=True).tail(20), 
+            columns=['proportion_ttl_views']).reset_index()
+       
+    return bottom_lessons
+
     
 # find top lessons for a program id after being active students
 def top_lessons_after_active(df):
